@@ -35,17 +35,21 @@ typedef struct
 	 * when the list is empty)
 	 */
 
+//	int 		*buflist;
+	int 		bufSize;
+	int 		numVictims;
+
 	/*
 	 * Statistics.  These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
 	 */
 	uint32		completePasses; /* Complete cycles of the clock sweep */
 	uint32		numBufferAllocs;	/* Buffers allocated since last reset */
-
 	/*
 	 * Notification latch, or NULL if none.  See StrategyNotifyBgWriter.
 	 */
 	Latch	   *bgwriterLatch;
+    int 		*buflist;
 } BufferStrategyControl;
 
 /* Pointers to shared state */
@@ -89,7 +93,10 @@ typedef struct BufferAccessStrategyData
 static volatile BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy);
 static void AddBufferToRing(BufferAccessStrategy strategy,
 				volatile BufferDesc *buf);
-
+void addBufferToList(int buf_id);
+void removeBufferFromList(int buf_id);
+void moveListDown(int startIndex);
+void moveListUp(int endIndex);
 // cs3223
 // StrategyUpdateAccessedBuffer 
 // Called by bufmgr when a buffer page is accessed.
@@ -98,9 +105,63 @@ static void AddBufferToRing(BufferAccessStrategy strategy,
 void
 StrategyUpdateAccessedBuffer(int buf_id, bool delete)
 {
-	elog(ERROR, "StrategyUpdateAccessedBuffer: Not implemented!");
+//	elog(INFO, "updateaccessedBuffer");
+	if(delete){
+		StrategyFreeBuffer(&BufferDescriptors[buf_id]);
+	}else{
+		removeBufferFromList(buf_id);
+		addBufferToList(buf_id);
+	}
 }
 
+
+
+void addBufferToList(int buf_id){
+//	elog(INFO, "addBufferToList");
+//    char *mem[150];
+//    sprintf(mem, "memloc obj: %p. nvic: %p. ff: %p. lf: %p. bs: %p. numV: %p. buflist: %p. comP: %p. numA: %p. latch: %p size: %d buflsize: %d bufl %p",
+//            StrategyControl, &StrategyControl->nextVictimBuffer, &StrategyControl->firstFreeBuffer,
+//            &StrategyControl->lastFreeBuffer, &StrategyControl->bufSize, &StrategyControl->numVictims, &StrategyControl->buflist,
+//            &StrategyControl->completePasses, &StrategyControl->numBufferAllocs, &StrategyControl->bgwriterLatch, sizeof(*StrategyControl), sizeof(StrategyControl->buflist), StrategyControl->buflist);
+//    elog(INFO, mem);
+	Assert(StrategyControl->bufSize < NBuffers);
+	moveListDown(0);
+	StrategyControl->buflist[0] = buf_id;
+	StrategyControl->bufSize++;
+	if(StrategyControl->bufSize == 0){
+		StrategyControl->nextVictimBuffer = -1;
+	}else {
+		StrategyControl->nextVictimBuffer = StrategyControl->buflist[StrategyControl->bufSize - 1];
+	}
+//	char str[40];
+//	sprintf(str, "buffer added: %d.   bufSize: %d",buf_id, StrategyControl->bufSize);
+//	elog(INFO, str);
+}
+void removeBufferFromList(int buf_id){
+//	elog(INFO, "removeBufferFromList");
+	for(int i = 0; i< NBuffers; i++){
+		if(StrategyControl->buflist[i] == buf_id){
+			moveListUp(i);
+			StrategyControl->bufSize--;
+//			char str[40];
+//			sprintf(str, "buffer removed: %d.   bufSize: %d",buf_id, StrategyControl->bufSize);
+//			elog(INFO, str);
+			return;
+		}
+	}
+}
+void moveListDown(int startIndex){
+//	elog(INFO, "moveListDown");
+	for(int i = StrategyControl->bufSize; i > startIndex; i--){
+		StrategyControl->buflist[i] = StrategyControl->buflist[i - 1];
+	}
+}
+void moveListUp(int endIndex){
+//	elog(INFO, "moveListUp");
+	for(int i = endIndex; i < StrategyControl->bufSize; i++){
+		StrategyControl->buflist[i] = StrategyControl->buflist[i + 1];
+	}
+}
 /*
  * StrategyGetBuffer
  *
@@ -121,9 +182,10 @@ StrategyUpdateAccessedBuffer(int buf_id, bool delete)
 volatile BufferDesc *
 StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 {
+//	elog(INFO, "StrategyGetBuffer");
 	volatile BufferDesc *buf;
 	Latch	   *bgwriterLatch;
-	int			trycounter;
+//	int			trycounter;
 
 	/*
 	 * If given a strategy object, see whether it can select a buffer. We
@@ -134,6 +196,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 		buf = GetBufferFromRing(strategy);
 		if (buf != NULL)
 		{
+//			elog(INFO, "buffer found in ring");
 			*lock_held = false;
 			return buf;
 		}
@@ -173,6 +236,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 	 */
 	while (StrategyControl->firstFreeBuffer >= 0)
 	{
+//		elog(INFO, "get buffer from free list");
 		buf = &BufferDescriptors[StrategyControl->firstFreeBuffer];
 		Assert(buf->freeNext != FREENEXT_NOT_IN_LIST);
 
@@ -187,8 +251,10 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 		 * we got to it.  It's probably impossible altogether as of 8.3, but
 		 * we'd better check anyway.)
 		 */
+
+		addBufferToList(buf->buf_id);
 		LockBufHdr(buf);
-		if (buf->refcount == 0 && buf->usage_count == 0)
+		if (buf->refcount == 0)
 		{
 			if (strategy != NULL)
 				AddBufferToRing(strategy, buf);
@@ -196,53 +262,92 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 		}
 		UnlockBufHdr(buf);
 	}
-
-	/* Nothing on the freelist, so run the "clock sweep" algorithm */
-	trycounter = NBuffers;
-	for (;;)
+	int bufIndexToTry = StrategyControl->bufSize - 1;
+//	elog(INFO, "get buffer from LRU");
+//	char string[30];
+//	sprintf(string, "pid: %d.  bufIndex: %d", getpid(), bufIndexToTry);
+//	elog(INFO, string);
+//	for(int i=0; i< StrategyControl->bufSize; i++){
+//		char str[20];
+//		sprintf(str, "index %d: %d", i, StrategyControl->buflist[i]);
+//		elog(INFO, str);
+//	}
+//	elog(INFO, "end Buffer");
+//	char stri[50];
+//    char strin[50];
+	for(int i = bufIndexToTry; i>=0; i--)
 	{
-		buf = &BufferDescriptors[StrategyControl->nextVictimBuffer];
+//        elog(INFO, "start of loop");
 
-		if (++StrategyControl->nextVictimBuffer >= NBuffers)
-		{
-			StrategyControl->nextVictimBuffer = 0;
+		buf = &BufferDescriptors[StrategyControl->buflist[i]];
+//        sprintf(strin, "bufIndex: %d", i);
+//        elog(INFO, strin);
+//        sprintf(stri, "buf_id: %d. refcount: %d.", buf->buf_id, buf->refcount);
+//        elog(INFO, stri);
+		StrategyControl->numVictims++;
+		if(StrategyControl->numVictims >= NBuffers){
 			StrategyControl->completePasses++;
+			StrategyControl->numVictims = 0;
 		}
-
-		/*
-		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
-		 * it; decrement the usage_count (unless pinned) and keep scanning.
-		 */
 		LockBufHdr(buf);
-		if (buf->refcount == 0)
-		{
-			if (buf->usage_count > 0)
-			{
-				buf->usage_count--;
-				trycounter = NBuffers;
+		if(buf->refcount == 0){
+            buf->usage_count = 0;
+			if(strategy != NULL) {
+				AddBufferToRing(strategy, buf);
 			}
-			else
-			{
-				/* Found a usable buffer */
-				if (strategy != NULL)
-					AddBufferToRing(strategy, buf);
-				return buf;
-			}
+            removeBufferFromList(buf->buf_id);
+            addBufferToList(buf->buf_id);
+			return buf;
 		}
-		else if (--trycounter == 0)
-		{
-			/*
-			 * We've scanned all the buffers without making any state changes,
-			 * so all the buffers are pinned (or were when we looked at them).
-			 * We could hope that someone will free one eventually, but it's
-			 * probably better to fail than to risk getting stuck in an
-			 * infinite loop.
-			 */
-			UnlockBufHdr(buf);
-			elog(ERROR, "no unpinned buffers available");
-		}
-		UnlockBufHdr(buf);
-	}
+        UnlockBufHdr(buf);
+    }
+    elog(ERROR, "no unpinned buffer available");
+//	/* Nothing on the freelist, so run the "clock sweep" algorithm */
+//	trycounter = NBuffers;
+//	for (;;)
+//	{
+//		buf = &BufferDescriptors[StrategyControl->nextVictimBuffer];
+//
+//		if (++StrategyControl->nextVictimBuffer >= NBuffers)
+//		{
+//			StrategyControl->nextVictimBuffer = 0;
+//			StrategyControl->completePasses++;
+//		}
+//
+//		/*
+//		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
+//		 * it; decrement the usage_count (unless pinned) and keep scanning.
+//		 */
+//		LockBufHdr(buf);
+//		if (buf->refcount == 0)
+//		{
+//			if (buf->usage_count > 0)
+//			{
+//				buf->usage_count--;
+//				trycounter = NBuffers;
+//			}
+//			else
+//			{
+//				/* Found a usable buffer */
+//				if (strategy != NULL)
+//					AddBufferToRing(strategy, buf);
+//				return buf;
+//			}
+//		}
+//		else if (--trycounter == 0)
+//		{
+//			/*
+//			 * We've scanned all the buffers without making any state changes,
+//			 * so all the buffers are pinned (or were when we looked at them).
+//			 * We could hope that someone will free one eventually, but it's
+//			 * probably better to fail than to risk getting stuck in an
+//			 * infinite loop.
+//			 */
+//			UnlockBufHdr(buf);
+//			elog(ERROR, "no unpinned buffers available");
+//		}
+//		UnlockBufHdr(buf);
+//	}
 }
 
 /*
@@ -251,6 +356,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 void
 StrategyFreeBuffer(volatile BufferDesc *buf)
 {
+//	elog(INFO, "strategyFreeBuffer");
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 
 	/*
@@ -263,6 +369,7 @@ StrategyFreeBuffer(volatile BufferDesc *buf)
 		if (buf->freeNext < 0)
 			StrategyControl->lastFreeBuffer = buf->buf_id;
 		StrategyControl->firstFreeBuffer = buf->buf_id;
+		removeBufferFromList(buf->buf_id);
 	}
 
 	LWLockRelease(BufFreelistLock);
@@ -337,6 +444,7 @@ StrategyShmemSize(void)
 
 	/* size of the shared replacement strategy control block */
 	size = add_size(size, MAXALIGN(sizeof(BufferStrategyControl)));
+	size = add_size(size, mul_size(NBuffers, sizeof(int)));
 
 	return size;
 }
@@ -352,6 +460,7 @@ void
 StrategyInitialize(bool init)
 {
 	bool		found;
+    bool        arrfound;
 
 	/*
 	 * Initialize the shared buffer lookup hashtable.
@@ -372,8 +481,8 @@ StrategyInitialize(bool init)
 		ShmemInitStruct("Buffer Strategy Status",
 						sizeof(BufferStrategyControl),
 						&found);
-
-	if (!found)
+    int *array = (int*) ShmemInitStruct("LRU Stack", sizeof(int) * NBuffers, &arrfound);
+	if (!found && !arrfound)
 	{
 		/*
 		 * Only done once, usually in postmaster
@@ -389,13 +498,17 @@ StrategyInitialize(bool init)
 
 		/* Initialize the clock sweep pointer */
 		StrategyControl->nextVictimBuffer = 0;
-
+        StrategyControl->buflist = array;
 		/* Clear statistics */
 		StrategyControl->completePasses = 0;
 		StrategyControl->numBufferAllocs = 0;
 
 		/* No pending notification */
+
+
 		StrategyControl->bgwriterLatch = NULL;
+		StrategyControl->bufSize = 0;
+		StrategyControl->numVictims = 0;
 	}
 	else
 		Assert(!init);
