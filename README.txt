@@ -50,7 +50,7 @@ Let S1 be a doubly-linked list of buffer pages with only 1 access, ordered from 
 Let S2 be a doubly-linked list of the last 1 or 2 accesses of accessed buffer pages, ordered from MRU to LRU.
 Let NBuffers be the total number of buffers.
 Node labels in [0, NBuffers) refer to last access of buffer with id equals to the node label.
-Node labels in [NBuffers, 2*NBuffers) refer to 2nd last access of buffer with id equals to node label-NBuffers.
+Node labels in [NBuffers, 2*NBuffers) refer to 2nd last access of buffer with id equals to (node label - NBuffers).
 S1 and S2 are implemented in the same way as in LRU for O(1) linked list operations.
 
 ==Summarised changes in freelist-lru2.c==
@@ -71,7 +71,7 @@ StrategyGetBuffer:
 	while S1 is not empty:
 		if refcount is 0:
 			Remove buf_id from S1 and S2.
-			Remove buf_id+NBuffers from S2(play safe).
+			Remove buf_id+NBuffers from S2(if exists in S2).
 			Insert buf_id to front of S1 and S2.
 			Return buffer.
 
