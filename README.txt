@@ -1,6 +1,6 @@
 ==Team members:==
 A0110781N	Qua Zi Xian
-A????????	Wei Han
+A0097582N	Wei Han
 
 ==LRU Implementation:==
 Variable-sized doubly-linked list of victim buffers bounded by NBuffers
@@ -38,6 +38,10 @@ StrategyFreeBuffer:
 	remove buffer(index) from victim list
 	add to head of free list
 
+StrategyShmemSize:
+	increase size by 2*NBuffers*sizeof(int) to account for the additional arrays used in 
+	StrategyControl.
+
 StrategyInitialize:
 	allocate the required arrays from shared memory(shmem functions)
 
@@ -50,3 +54,7 @@ In the clock sweep, the only operations used to move on to the next victim for
 consideration are arithmetic operations like increment and modulo.
 However, in our LRU implementation, accessing the next victim involves pointer
 indirection, which is slower than pure arithmetic operations.
+
+In addition, the 2 arrays used for pointing are allocated separately from 
+the StrategyControl. Accessing the 2 arrays would access a (potentially) 
+different memory block, which can contribute to the delay.
