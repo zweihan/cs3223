@@ -104,10 +104,9 @@ In the clock sweep, the only operations used to move on to the next victim for
 consideration are arithmetic operations like increment and modulo.
 However, in our LRU implementation, accessing the next victim involves pointer
 indirection, which is slower than pure arithmetic operations.
-
-In addition, the 2 arrays used for pointing are allocated separately from 
+In addition, for LRU, the 2 arrays used for pointing are allocated separately from 
 the StrategyControl. Accessing the 2 arrays would access a (potentially) 
-different memory block, which can contribute to the delay.
+different memory block, which can contribute to the delay. This is even worse for LRU2 as 2 linked lists are maintained.
 
 On the contrary, LRU has a higher hit ratio than clock sweep and LRU2 has higher hit
 rate than LRU.
