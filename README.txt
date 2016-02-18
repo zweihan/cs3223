@@ -45,9 +45,59 @@ StrategyShmemSize:
 StrategyInitialize:
 	allocate the required arrays from shared memory(shmem functions)
 
+==LRU2 Implementation==
+Let S1 be a doubly-linked list of buffer pages with only 1 access, ordered from MRU to LRU.
+Let S2 be a doubly-linked list of the last 1 or 2 accesses of accessed buffer pages, ordered from MRU to LRU.
+Let NBuffers be the total number of buffers.
+Node labels in [0, NBuffers) refer to last access of buffer with id equals to the node label.
+Node labels in [NBuffers, 2*NBuffers) refer to 2nd last access of buffer with id equals to node label-NBuffers.
+S1 and S2 are implemented in the same way as in LRU for O(1) linked list operations.
+
+==Summarised changes in freelist-lru2.c==
+StrategyUpdateAccessedBuffer:
+	if is delete, remove buf_id from S1 and S2. Remove buf_id+NBuffers from S2. Add buffer to freelist.
+	else:
+		Remove buf_id from S1.
+		Remove buf_id+NBuffers from S2.
+		Replace buf_id with buf_id+NBuffers in S2.
+		Insert buf_id to front(MRU) of S2.
+
+StrategyGetBuffer:
+	while have free buffer:
+		Remove buffer from freelist.
+		Add buf_id to S1 and S2.
+		if refcount is 0, return this buffer.
+
+	while S1 is not empty:
+		if refcount is 0:
+			Remove buf_id from S1 and S2.
+			Remove buf_id+NBuffers from S2(play safe).
+			Insert buf_id to front of S1 and S2.
+			Return buffer.
+
+	while S2 is not empty:
+		if node is 2nd last access of a buffer:
+			Get the corresponding buffer.
+			if refcount is 0:
+				Remove buf_id from S1 and S2.
+				Remove buf_id+NBuffers from S2.
+				Insert buf_id to front of S1 and S2.
+				Return buffer.
+	throw error
+
+StrategyFreeBuffer:
+	Similar to that in LRU
+
+StrategyShmemSize:
+	Similar to that in LRU
+
+StrategyInitialize:
+	Similar to that in LRU
+
 ==Benchmarking:==
 From benchmarking results, it seems that the LRU runs slower than the clock
-sweep.
+sweep and LRU2 runs slower than LRU.
+
 This may be because the overhead incurred from selection of the buffer to be
 replaced takes up a significant portion of the total delay.
 In the clock sweep, the only operations used to move on to the next victim for
@@ -58,3 +108,6 @@ indirection, which is slower than pure arithmetic operations.
 In addition, the 2 arrays used for pointing are allocated separately from 
 the StrategyControl. Accessing the 2 arrays would access a (potentially) 
 different memory block, which can contribute to the delay.
+
+On the contrary, LRU has a higher hit ratio than clock sweep and LRU2 has higher hit
+rate than LRU.
