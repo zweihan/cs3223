@@ -1,0 +1,330 @@
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 1: IS-b plan
+SET
+SET
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Index Scan using b_idx on r  (cost=0.42..29941.45 rows=23424 width=32) (actual time=1.190..502.310 rows=10000 loops=1)
+   Index Cond: (b = 9)
+   Buffers: shared hit=3 read=5498
+ Planning time: 8.264 ms
+ Execution time: 505.546 ms
+(5 rows)
+
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           5468 |             0 |            34 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 1: BIS-b plan
+SET
+SET
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on r  (cost=441.96..8087.76 rows=23424 width=32) (actual time=8.445..523.843 rows=10000 loops=1)
+   Recheck Cond: (b = 9)
+   Heap Blocks: exact=5468
+   Buffers: shared hit=3 read=5498
+   ->  Bitmap Index Scan on b_idx  (cost=0.00..436.11 rows=23424 width=0) (actual time=6.784..6.784 rows=10000 loops=1)
+         Index Cond: (b = 9)
+         Buffers: shared hit=3 read=30
+ Planning time: 10.208 ms
+ Execution time: 527.970 ms
+(9 rows)
+
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           5468 |             0 |            34 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 2: bis-cb
+BEGIN
+DROP INDEX
+SET
+SET
+                                                         QUERY PLAN                                                         
+----------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on r  (cost=1159.92..9137.92 rows=50000 width=32) (actual time=26.695..187.038 rows=50000 loops=1)
+   Recheck Cond: (c = 10)
+   Heap Blocks: exact=7346
+   Buffers: shared hit=3 read=7541
+   ->  Bitmap Index Scan on cb_idx  (cost=0.00..1147.42 rows=50000 width=0) (actual time=24.320..24.320 rows=50000 loops=1)
+         Index Cond: (c = 10)
+         Buffers: shared hit=3 read=195
+ Planning time: 8.265 ms
+ Execution time: 193.043 ms
+(9 rows)
+
+ROLLBACK
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           7346 |             0 |           198 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------Question 2: is-cb
+BEGIN
+DROP INDEX
+SET
+SET
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Index Scan using cb_idx on r  (cost=0.42..31021.94 rows=50000 width=32) (actual time=1.139..1133.998 rows=50000 loops=1)
+   Index Cond: (c = 10)
+   Buffers: shared hit=33569 read=7541
+ Planning time: 7.568 ms
+ Execution time: 1141.217 ms
+(5 rows)
+
+ROLLBACK
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           7346 |         33566 |           198 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 3 bis-c
+SET
+SET
+BEGIN
+DROP INDEX
+--------------bis-c
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on r  (cost=4685.93..15163.92 rows=250000 width=8) (actual time=48.973..203.684 rows=200000 loops=1)
+   Recheck Cond: (c > 15)
+   Heap Blocks: exact=7353
+   Buffers: shared hit=3 read=7903
+   ->  Bitmap Index Scan on c_idx  (cost=0.00..4623.43 rows=250000 width=0) (actual time=46.791..46.791 rows=200000 loops=1)
+         Index Cond: (c > 15)
+         Buffers: shared hit=3 read=550
+ Planning time: 7.539 ms
+ Execution time: 221.253 ms
+(9 rows)
+
+ROLLBACK
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           7353 |             0 |           553 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 3: IOS-cb
+SET
+SET
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Index Only Scan using cb_idx on r  (cost=0.42..8231.42 rows=250000 width=8) (actual time=1.229..78.947 rows=200000 loops=1)
+   Index Cond: (c > 15)
+   Heap Fetches: 0
+   Buffers: shared hit=3 read=770
+ Planning time: 8.159 ms
+ Execution time: 95.635 ms
+(6 rows)
+
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |              1 |             0 |           773 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 3: IS-c
+SET
+SET
+BEGIN
+DROP INDEX
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Index Scan using c_idx on r  (cost=0.42..36472.17 rows=250000 width=8) (actual time=1.035..275.441 rows=200000 loops=1)
+   Index Cond: (c > 15)
+   Buffers: shared hit=22032 read=7903
+ Planning time: 6.717 ms
+ Execution time: 292.858 ms
+(5 rows)
+
+ROLLBACK
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           7353 |         22029 |           553 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 4: ABIS-cb;
+SET
+SET
+BEGIN
+DROP INDEX
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on r  (cost=934.75..9037.75 rows=29290 width=32) (actual time=19.655..185.577 rows=28544 loops=1)
+   Recheck Cond: (c = 10)
+   Filter: (b > 9)
+   Rows Removed by Filter: 21456
+   Heap Blocks: exact=7346
+   Buffers: shared hit=3 read=7485
+   ->  Bitmap Index Scan on c_idx  (cost=0.00..927.42 rows=50000 width=0) (actual time=17.147..17.147 rows=50000 loops=1)
+         Index Cond: (c = 10)
+         Buffers: shared hit=3 read=139
+ Planning time: 8.739 ms
+ Execution time: 190.152 ms
+(11 rows)
+
+ROLLBACK
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           7346 |             0 |           142 |            0
+(1 row)
+
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+---------------- Question 4: BIS-cb;
+SET
+SET
+BEGIN
+DROP INDEX
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on r  (cost=752.65..8545.00 rows=29290 width=32) (actual time=15.491..290.196 rows=28544 loops=1)
+   Recheck Cond: ((c = 10) AND (b > 9))
+   Heap Blocks: exact=7208
+   Buffers: shared hit=3 read=7321
+   ->  Bitmap Index Scan on cb_idx  (cost=0.00..745.33 rows=29290 width=0) (actual time=13.311..13.311 rows=28544 loops=1)
+         Index Cond: ((c = 10) AND (b > 9))
+         Buffers: shared hit=3 read=113
+ Planning time: 6.052 ms
+ Execution time: 294.123 ms
+(9 rows)
+
+ROLLBACK
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |           7208 |             0 |           115 |            0
+(1 row)
+
