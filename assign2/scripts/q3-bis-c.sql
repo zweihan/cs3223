@@ -1,6 +1,6 @@
 \echo ---------------- Question 3 bis-c
 
-SET enable_seqscan = ON;
+SET enable_seqscan = OFF;
 SET enable_bitmapscan = ON;
 
 begin;

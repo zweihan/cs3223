@@ -3,7 +3,7 @@
 # sample script for Question 1
 
 DBNAME=assign2
-for query in q1-is-b.sql q1-bis-b.sql q2-bis-cb.sql q2-is-cb.sql q3-bis-c.sql q3-ios-cb.sql q3-is-c.sql q4-abis-cb.sql q4-bis-cb.sql
+for query in *.sql
 do
 	# reset statistics
 	psql -c "SELECT pg_stat_reset();" ${DBNAME}
@@ -14,7 +14,7 @@ do
 	else
 		# running on own machine
 		#for osx: `sudo sh -c "sync && purge;"` "
-		sudo sh -c "sync; echo 3 > /proc/sys/vm/drop_caches"
+		sudo sh -c "sync && purge;"
 	fi
 	psql -f $query ${DBNAME}
 	# clear buffer pool
