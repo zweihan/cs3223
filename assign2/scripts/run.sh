@@ -14,7 +14,7 @@ do
 	else
 		# running on own machine
 		#for osx: `sudo sh -c "sync && purge;"` "
-		sudo sh -c "sync && purge;"
+		sudo sh -c "sync; echo 3 > /proc/sys/vm/drop_caches"
 	fi
 	psql -f $query ${DBNAME}
 	# clear buffer pool
