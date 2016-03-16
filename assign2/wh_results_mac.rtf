@@ -1,0 +1,119 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf340
+{\fonttbl\f0\fnil\fcharset0 Consolas;\f1\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red242\green242\blue242;\red0\green0\blue120;\red234\green234\blue234;
+}
+\paperw11900\paperh16840\margl1440\margr1440\vieww19000\viewh20180\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \CocoaLigature0 INDEX AVAILABLE\
+\cf2 \cb0 user_name | schema_name | table_name | index_name | is_unique | is_primary | index_type | indkey | index_keys | is_functional | is_partial \
+-----------+-------------+------------+------------+-----------+------------+------------+--------+------------+---------------+------------\
+ weihan    | public      | r          | r_pkey     | t         | t          | btree      | 1      | \{a\}        | f             | f\
+ weihan    | public      | r          | b_idx      | f         | f          | btree      | 2      | \{b\}        | f             | f\
+ weihan    | public      | r          | c_idx      | f         | f          | btree      | 3      | \{c\}        | f             | f\
+ weihan    | public      | r          | cb_idx     | f         | f          | btree      | 3 2    | \{c,b\}      | f             | f\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f1 \cf0 \cb1 \CocoaLigature1 \
+\
+Q1:\
+bis-b\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0 \cf2 \cb0 \CocoaLigature0  Bitmap Heap Scan on r  (cost=441.96..8087.76 rows=23424 width=32) (actual time=7.172..34.267 rows=10000 loops=1)\
+   Recheck Cond: (b = 9)\
+   Heap Blocks: exact=5468\
+   ->  Bitmap Index Scan on b_idx  (cost=0.00..436.11 rows=23424 width=0) (actual time=5.442..5.442 rows=10000 loops=1)\
+         Index Cond: (b = 9)\
+ Planning time: 0.156 ms\
+ Execution time: 35.146 ms\
+(7 rows)\
+\cf0 \cb1 \
+is-b\cf2 \
+\cb0 Index Scan using b_idx on r  (cost=0.42..29941.45 rows=23424 width=32) (actual time=0.080..31.152 rows=10000 loops=1)\
+   Index Cond: (b = 9)\
+ Planning time: 0.165 ms\
+ Execution time: 32.234 ms\
+\
+\
+\pard\pardeftab720\sl300\partightenfactor0
+
+\fs26 \cf3 \cb4 \expnd0\expndtw0\kerning0
+\CocoaLigature1 \
+Q2:\
+bis-cb\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\fs24 \cf2 \cb0 \kerning1\expnd0\expndtw0 \CocoaLigature0  Bitmap Heap Scan on r  (cost=1159.92..9137.92 rows=50000 width=32) (actual time=21.341..61.328 rows=50000 loops=1)\
+   Recheck Cond: (c = 10)\
+   Heap Blocks: exact=7346\
+   ->  Bitmap Index Scan on cb_idx  (cost=0.00..1147.42 rows=50000 width=0) (actual time=19.667..19.667 rows=50000 loops=1)\
+         Index Cond: (c = 10)\
+ Planning time: 0.207 ms\
+ Execution time: 64.102 ms
+\fs26 \cf3 \cb4 \expnd0\expndtw0\kerning0
+\CocoaLigature1 \
+\pard\pardeftab720\sl300\partightenfactor0
+\cf3 \
+\
+is-cb\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\fs24 \cf2 \cb0 \kerning1\expnd0\expndtw0 \CocoaLigature0  Index Scan using cb_idx on r  (cost=0.42..31021.94 rows=50000 width=32) (actual time=0.074..84.340 rows=50000 loops=1)\
+   Index Cond: (c = 10)\
+ Planning time: 0.166 ms\
+ Execution time: 88.970 ms\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \cb1 \
+\
+Q3:\
+\
+is-c\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb0  Index Scan using c_idx on r  (cost=0.42..36472.17 rows=250000 width=8) (actual time=0.088..155.199 rows=200000 loops=1)\
+   Index Cond: (c > 15)\
+ Planning time: 0.133 ms\
+ Execution time: 166.194 ms\cf0 \cb1 \
+\
+bis-c\
+\cf2 \cb0 Bitmap Heap Scan on r  (cost=4685.93..15163.92 rows=250000 width=8) (actual time=46.498..137.822 rows=200000 loops=1)\
+   Recheck Cond: (c > 15)\
+   Heap Blocks: exact=7353\
+   ->  Bitmap Index Scan on c_idx  (cost=0.00..4623.43 rows=250000 width=0) (actual time=44.684..44.684 rows=200000 loops=1)\
+         Index Cond: (c > 15)\
+ Planning time: 0.175 ms\
+ Execution time: 148.729 ms\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 \cb1 \
+\
+ios-cb\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 \cb0  Index Only Scan using cb_idx on r  (cost=0.42..8231.42 rows=250000 width=8) (actual time=0.104..67.453 rows=200000 loops=1)\
+   Index Cond: (c > 15)\
+   Heap Fetches: 0\
+ Planning time: 0.163 ms\
+ Execution time: 78.374 ms\cf0 \cb1 \
+\
+Q4:\
+bis-cb\
+\cf2 \cb0  Bitmap Heap Scan on r  (cost=32.43..3139.64 rows=1171 width=32) (actual time=0.322..2.727 rows=449 loops=1)\
+   Recheck Cond: ((c = 10) AND (b = 9))\
+   Heap Blocks: exact=431\
+   ->  Bitmap Index Scan on cb_idx  (cost=0.00..32.14 rows=1171 width=0) (actual time=0.209..0.209 rows=449 loops=1)\
+         Index Cond: ((c = 10) AND (b = 9))\
+ Planning time: 0.330 ms\
+ Execution time: 2.829 ms\cf0 \cb1 \
+\
+ABIS-b-c\
+\cf2 \cb0  Bitmap Heap Scan on r  (cost=1364.37..4471.57 rows=1171 width=32) (actual time=16.751..18.687 rows=449 loops=1)\
+   Recheck Cond: ((b = 9) AND (c = 10))\
+   Heap Blocks: exact=431\
+   ->  BitmapAnd  (cost=1364.37..1364.37 rows=1171 width=0) (actual time=16.642..16.642 rows=0 loops=1)\
+         ->  Bitmap Index Scan on b_idx  (cost=0.00..436.11 rows=23424 width=0) (actual time=3.361..3.361 rows=10000 loops=1)\
+               Index Cond: (b = 9)\
+         ->  Bitmap Index Scan on c_idx  (cost=0.00..927.42 rows=50000 width=0) (actual time=11.704..11.704 rows=50000 loops=1)\
+               Index Cond: (c = 10)\
+ Planning time: 0.263 ms\
+ Execution time: 18.821 ms\cf0 \cb1 \
+\
+}
