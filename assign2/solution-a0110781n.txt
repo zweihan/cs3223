@@ -1,0 +1,76 @@
+CS3223 ASSIGNMENT 2
+
+TEAM MEMBERS:
+A0110781N Qua Zi Xian
+A0097582N Zheng Weihan
+
+QUESTION 1
+Execution time for IS-b: 413ms
+Execution time for BIS-b: 874ms
+Explanation for performance difference:
+===
+All matching tuples may each be in a different page. This eliminates performance
+gain from access tuples in sorted RID order. Instead, the overhead of
+initializing, updating and scanning of bitmap becomes obvious.
+===
+
+QUESTION 2
+Execution time for IS-cb: 1068ms
+Execution time for BIS-cb: 413ms
+Explanation for performance difference:
+===
+In this query, it is likely that many matching tuples are on the same page but
+the entries in the index leaf nodes are not in ascending RID index order.
+Without bitmap, there are 33000 heap_blks_hit. Although they are buffer hits,
+this involves many calls to buffer manager, which checks if the buffer page is
+present each time. The number of times this is done causes the overhead of such
+operations to be large.
+With bitmap, upon requesting a buffer page, all matching RIDs that are in the
+buffer page are read in one shot. This remove the need to request for the same
+buffer page from the buffer manager, as can be seen from the 0
+heap_blks_hit statistic. Thus, the overall execution time is much faster.
+===
+
+QUESTION 3
+Execution time for IS-c: 731ms
+Execution time for BIS-c: 469ms
+Execution time for IOS-cb: 188ms
+Explanation for performance difference:
+===
+Comparing page IO statistics for IS-c and BIS-c, the explanation is the same as that 
+of Question 2.
+Comparing page IO statistics of BIS-c and IOS-cb, while IOS-cb has more
+idx_blks_read, it has fewer total blocks read. The slightly larger
+idx_blks_read is due to the larger size of leaf node entry in cb_idx, resulting
+in more leaf pages fetched for the same number of matching tuples.
+The large difference in total number of pages read is due to the lack of need
+for IOS-cb to do RID lookup. The difference in total pages read results in
+faster execution for IOS-cb compared to BIS-c.
+===
+
+QUESTION 4
+Execution time for BIS-cb: 187ms
+Execution time for ABIS-b-c: 553ms
+Explanation for performance difference:
+===
+Here, both RID lookup and index intersection are made efficient, so the
+difference lies in the total number of pages read.
+Both plans compute the final set of RIDs to find before doing the lookup, so
+heap_blks_read is the same for both plans. However, ABIS-b-c has significantly
+more(172) idx_blks_read than BIS-cb(6). This contributes to more disk IO time,
+causing ABIS-b-c to be slower.
+===
+
+QUESTION 5
+Query: select * from r where (b < 2) and (c > 15)
+Execution time for IS-b: 450ms
+Execution time for BIS-cb: 1007ms
+
+
+QUESTION 6
+Best query plan: IS-c
+Execution time for best plan: 438ms
+Worst query plan: BIS-cb
+Execution time for worst plan: 1203ms
+
+
