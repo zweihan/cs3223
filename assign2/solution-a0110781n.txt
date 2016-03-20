@@ -9,9 +9,11 @@ Execution time for IS-b: 413ms
 Execution time for BIS-b: 874ms
 Explanation for performance difference:
 ===
-All matching tuples may each be in a different page. This eliminates performance
-gain from access tuples in sorted RID order. Instead, the overhead of
-initializing, updating and scanning of bitmap becomes obvious.
+The advantage of BIS is eliminate reads from a different page. It is likely, for this 
+case, that all the matching tuples are in a  different page as the heap_blks_hit 
+is 0 for IS. This eliminates performance gain from access tuples in sorted RID order. 
+Instead, the overhead of initializing, updating and scanning of bitmap becomes obvious.
+
 ===
 
 QUESTION 2
