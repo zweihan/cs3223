@@ -1,0 +1,1585 @@
+ALGOCHANGE:  inlj
+Number of tuples in relation R = 100000
+Join factor = 5
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 5)) AS temp(x);
+SELECT 500000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  5
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                     QUERY PLAN                                                      
+---------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1853.77..32689.49 rows=123821 width=8) (actual time=73.738..647.445 rows=124995 loops=1)
+   Buffers: shared hit=199375 read=1567
+   ->  HashAggregate  (cost=1853.35..2102.76 rows=24941 width=4) (actual time=68.854..86.057 rows=24999 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24941 width=4) (actual time=0.033..47.493 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..1.18 rows=5 width=12) (actual time=0.011..0.018 rows=5 loops=24999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=199375 read=1026
+ Planning time: 38.516 ms
+ Execution time: 676.872 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |            681 |        124314 |           346 |        75061
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 10
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 10)) AS temp(x);
+SELECT 1000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  10
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1854.30..52942.39 rows=253579 width=8) (actual time=81.740..1174.131 rows=249990 loops=1)
+   Buffers: shared hit=323757 read=2590
+   ->  HashAggregate  (cost=1853.87..2105.36 rows=25149 width=4) (actual time=69.077..85.557 rows=24999 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25149 width=4) (actual time=0.034..47.762 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..1.92 rows=10 width=12) (actual time=0.015..0.037 rows=10 loops=24999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=323757 read=2049
+ Planning time: 21.611 ms
+ Execution time: 1221.367 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           1361 |        248629 |           689 |        75128
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 20
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 20)) AS temp(x);
+SELECT 2000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  20
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1853.57..92834.28 rows=490586 width=8) (actual time=90.870..2137.515 rows=499980 loops=1)
+   Buffers: shared hit=572384 read=4636
+   ->  HashAggregate  (cost=1853.14..2101.71 rows=24857 width=4) (actual time=68.950..86.204 rows=24999 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24857 width=4) (actual time=0.032..47.692 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.43..3.45 rows=20 width=12) (actual time=0.023..0.071 rows=20 loops=24999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=572384 read=4095
+ Planning time: 27.842 ms
+ Execution time: 2223.925 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           2722 |        497258 |          1374 |        75126
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 40
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 40)) AS temp(x);
+SELECT 4000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  40
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1854.28..174189.03 rows=1024160 width=8) (actual time=80.083..7007.520 rows=999960 loops=1)
+   Buffers: shared hit=1069635 read=8731
+   ->  HashAggregate  (cost=1853.85..2105.22 rows=25138 width=4) (actual time=69.377..85.957 rows=24999 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25138 width=4) (actual time=0.036..48.044 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.43..6.44 rows=41 width=12) (actual time=0.067..0.258 rows=40 loops=24999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=1069635 read=8190
+ Planning time: 33.359 ms
+ Execution time: 7157.757 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5446 |        994514 |          2745 |        75121
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 80
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 80)) AS temp(x);
+SELECT 8000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  80
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1854.34..312567.45 rows=2077824 width=8) (actual time=108.867..18336.109 rows=1999920 loops=1)
+   Buffers: shared hit=2062757 read=18301
+   ->  HashAggregate  (cost=1853.91..2105.56 rows=25165 width=4) (actual time=68.954..87.439 rows=24999 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25165 width=4) (actual time=0.035..47.601 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.43..11.51 rows=83 width=12) (actual time=0.146..0.692 rows=80 loops=24999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=2062757 read=17760
+ Planning time: 30.672 ms
+ Execution time: 18642.718 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |          10895 |       1989025 |          6866 |        73732
+(2 rows)
+
+ALGOCHANGE:  smj-i
+Number of tuples in relation R = 100000
+Join factor = 5
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 5)) AS temp(x);
+SELECT 500000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  5
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=0.71..29989.83 rows=125413 width=8) (actual time=0.079..459.838 rows=124995 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=124325 read=1831
+   ->  Index Scan using sy_idx on s  (cost=0.42..23484.58 rows=500000 width=12) (actual time=0.027..196.230 rows=124996 loops=1)
+         Buffers: shared hit=124320 read=1020
+   ->  Materialize  (cost=0.29..3460.21 rows=24766 width=4) (actual time=0.037..111.842 rows=24999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=24766 width=4) (actual time=0.027..95.626 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=5 read=811
+ Planning time: 28.388 ms
+ Execution time: 487.578 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |            681 |        124317 |           347 |            4
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 10
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 10)) AS temp(x);
+SELECT 1000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  10
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=0.72..57086.29 rows=252340 width=8) (actual time=0.080..809.296 rows=249990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=248640 read=2853
+   ->  Index Scan using sy_idx on s  (cost=0.42..47419.25 rows=1000000 width=12) (actual time=0.027..424.241 rows=249991 loops=1)
+         Buffers: shared hit=248635 read=2042
+   ->  Materialize  (cost=0.29..3461.11 rows=25125 width=4) (actual time=0.037..114.427 rows=24999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=25125 width=4) (actual time=0.026..97.124 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=5 read=811
+ Planning time: 42.031 ms
+ Execution time: 862.307 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |           1361 |        248632 |           689 |            4
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 20
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 20)) AS temp(x);
+SELECT 2000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  20
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=4.73..110999.40 rows=506866 width=8) (actual time=0.081..1314.196 rows=499980 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=497269 read=4897
+   ->  Index Scan using sy_idx on s  (cost=0.43..95131.89 rows=2000000 width=12) (actual time=0.027..811.313 rows=499981 loops=1)
+         Buffers: shared hit=497264 read=4086
+   ->  Materialize  (cost=0.29..3460.54 rows=24898 width=4) (actual time=0.038..83.167 rows=24999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=24898 width=4) (actual time=0.027..68.111 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=5 read=811
+ Planning time: 33.245 ms
+ Execution time: 1402.286 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |           2722 |        497261 |          1372 |            4
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 40
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 40)) AS temp(x);
+SELECT 4000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  40
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=4.73..218594.60 rows=1001350 width=8) (actual time=0.080..2225.741 rows=999960 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=994525 read=8987
+   ->  Index Scan using sy_idx on s  (cost=0.43..190282.34 rows=4000000 width=12) (actual time=0.026..1444.834 rows=999961 loops=1)
+         Buffers: shared hit=994520 read=8176
+   ->  Materialize  (cost=0.29..3460.43 rows=24857 width=4) (actual time=0.037..86.615 rows=24999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=24857 width=4) (actual time=0.026..72.730 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=5 read=811
+ Planning time: 61.793 ms
+ Execution time: 2375.833 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ s       |           5446 |        994517 |          2738 |            4
+ r       |            541 |             2 |           276 |            4
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 80
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 80)) AS temp(x);
+SELECT 8000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  80
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=19.76..434183.71 rows=2005768 width=8) (actual time=0.081..6299.039 rows=1999920 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=1989040 read=17164
+   ->  Index Scan using sy_idx on s  (cost=0.43..380716.41 rows=8000097 width=12) (actual time=0.027..4343.422 rows=1999921 loops=1)
+         Buffers: shared hit=1989035 read=16353
+   ->  Materialize  (cost=0.29..3460.93 rows=25057 width=4) (actual time=0.038..122.974 rows=24999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=25057 width=4) (actual time=0.026..101.904 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=5 read=811
+ Planning time: 48.055 ms
+ Execution time: 6700.170 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ s       |          10891 |       1989032 |          5470 |            4
+ r       |            541 |             2 |           276 |            4
+(2 rows)
+
+ALGOCHANGE:  smj
+Number of tuples in relation R = 100000
+Join factor = 5
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 5)) AS temp(x);
+SELECT 500000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  5
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=67197.16..71572.73 rows=126838 width=8) (actual time=1134.131..1276.300 rows=124995 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=3240, temp read=416 written=1346
+   ->  Sort  (cost=63578.92..64828.92 rows=500000 width=12) (actual time=1095.146..1158.781 rows=124996 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 10728kB
+         Buffers: shared hit=5 read=2701, temp read=416 written=1346
+         ->  Seq Scan on s  (cost=0.00..7703.00 rows=500000 width=12) (actual time=0.025..221.485 rows=500000 loops=1)
+               Buffers: shared hit=2 read=2701
+   ->  Sort  (cost=3618.09..3680.62 rows=25011 width=4) (actual time=38.971..41.834 rows=24999 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 2136kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25011 width=4) (actual time=0.017..30.229 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=2 read=539
+ Planning time: 51.523 ms
+ Execution time: 1294.965 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           2703 |             2 |             6 |            1
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 10
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 10)) AS temp(x);
+SELECT 1000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  10
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=135775.58..144532.78 rows=250834 width=8) (actual time=2097.941..2383.008 rows=249990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=5943, temp read=681 written=2691
+   ->  Sort  (cost=132154.34..134654.34 rows=1000000 width=12) (actual time=2059.271..2202.092 rows=249991 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 21448kB
+         Buffers: shared hit=5 read=5404, temp read=681 written=2691
+         ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=6.577..428.284 rows=1000000 loops=1)
+               Buffers: shared hit=2 read=5404
+   ->  Sort  (cost=3621.14..3683.76 rows=25049 width=4) (actual time=38.656..41.904 rows=24999 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 2136kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25049 width=4) (actual time=0.016..29.913 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=2 read=539
+ Planning time: 51.981 ms
+ Execution time: 2416.597 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           5406 |             2 |             6 |            1
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 20
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 20)) AS temp(x);
+SELECT 2000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  20
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=277911.79..295358.35 rows=497326 width=8) (actual time=4142.322..4709.782 rows=499980 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=11348, temp read=3545 written=7532
+   ->  Sort  (cost=274307.69..279307.69 rows=2000000 width=12) (actual time=4103.519..4402.968 rows=499981 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 42992kB
+         Buffers: shared hit=5 read=10809, temp read=3545 written=7532
+         ->  Seq Scan on s  (cost=0.00..30811.00 rows=2000000 width=12) (actual time=6.615..757.808 rows=2000000 loops=1)
+               Buffers: shared hit=2 read=10809
+   ->  Sort  (cost=3603.16..3665.23 rows=24825 width=4) (actual time=38.789..42.310 rows=24999 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 2136kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24825 width=4) (actual time=0.026..29.961 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=2 read=539
+ Planning time: 25.873 ms
+ Execution time: 4773.151 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ s       |          10811 |             2 |             6 |            1
+ r       |            541 |             2 |             4 |            1
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 40
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 40)) AS temp(x);
+SELECT 4000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  40
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=640579.01..675457.05 rows=991883 width=8) (actual time=8925.739..10019.050 rows=999960 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=22159, temp read=11065 written=19085
+   ->  Sort  (cost=636977.37..646977.37 rows=4000000 width=12) (actual time=8886.960..9463.175 rows=999961 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 86008kB
+         Buffers: shared hit=5 read=21620, temp read=11065 written=19085
+         ->  Seq Scan on s  (cost=0.00..61622.00 rows=4000000 width=12) (actual time=5.134..1472.578 rows=4000000 loops=1)
+               Buffers: shared hit=2 read=21620
+   ->  Sort  (cost=3601.64..3663.65 rows=24806 width=4) (actual time=38.763..42.506 rows=24999 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 2136kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24806 width=4) (actual time=0.026..29.923 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=2 read=539
+ Planning time: 52.492 ms
+ Execution time: 10142.793 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |          21622 |             2 |             6 |            1
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 80
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 80)) AS temp(x);
+SELECT 8000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  80
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=1317550.85..1386983.07 rows=1962215 width=8) (actual time=19445.333..21586.240 rows=1999920 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=43781, temp read=32584 written=48671
+   ->  Sort  (cost=1313942.07..1333941.96 rows=7999957 width=12) (actual time=19406.399..20534.295 rows=1999921 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 172088kB
+         Buffers: shared hit=5 read=43242, temp read=32584 written=48671
+         ->  Seq Scan on s  (cost=0.00..123243.57 rows=7999957 width=12) (actual time=5.285..2860.951 rows=8000000 loops=1)
+               Buffers: shared hit=2 read=43242
+   ->  Sort  (cost=3608.78..3671.02 rows=24895 width=4) (actual time=38.920..43.059 rows=24999 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 2136kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24895 width=4) (actual time=0.026..30.082 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=2 read=539
+ Planning time: 37.682 ms
+ Execution time: 21830.224 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |          43244 |             2 |             6 |            1
+(2 rows)
+
+ALGOCHANGE:  hj
+Number of tuples in relation R = 100000
+Join factor = 5
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 5)) AS temp(x);
+SELECT 500000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  5
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2096.71..13503.02 rows=124078 width=8) (actual time=69.320..635.728 rows=124995 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared read=3247
+   ->  Seq Scan on s  (cost=0.00..7703.00 rows=500000 width=12) (actual time=0.029..156.329 rows=500000 loops=1)
+         Buffers: shared read=2703
+   ->  Hash  (cost=1791.00..1791.00 rows=24457 width=4) (actual time=68.782..68.782 rows=24999 loops=1)
+         Buckets: 4096  Batches: 1  Memory Usage: 879kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24457 width=4) (actual time=0.030..51.238 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+ Planning time: 27.218 ms
+ Execution time: 658.418 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           2703 |             0 |             1 |            0
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 10
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 10)) AS temp(x);
+SELECT 1000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  10
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2102.94..24828.85 rows=242980 width=8) (actual time=74.903..1129.478 rows=249990 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared read=5950
+   ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=4.877..305.696 rows=1000000 loops=1)
+         Buffers: shared read=5406
+   ->  Hash  (cost=1791.00..1791.00 rows=24955 width=4) (actual time=69.523..69.523 rows=24999 loops=1)
+         Buckets: 4096  Batches: 1  Memory Usage: 879kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24955 width=4) (actual time=0.033..52.093 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+ Planning time: 20.778 ms
+ Execution time: 1170.814 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |             0 |             1 |            0
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 20
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 20)) AS temp(x);
+SELECT 2000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  20
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2107.65..47893.51 rows=505962 width=8) (actual time=75.918..1826.994 rows=499980 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared read=11355
+   ->  Seq Scan on s  (cost=0.00..30811.00 rows=2000000 width=12) (actual time=6.563..504.285 rows=2000000 loops=1)
+         Buffers: shared read=10811
+   ->  Hash  (cost=1791.00..1791.00 rows=25332 width=4) (actual time=68.842..68.842 rows=24999 loops=1)
+         Buckets: 4096  Batches: 1  Memory Usage: 879kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25332 width=4) (actual time=0.030..51.164 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+ Planning time: 29.428 ms
+ Execution time: 1892.908 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |          10811 |             0 |             1 |            0
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 40
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 40)) AS temp(x);
+SELECT 4000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  40
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2105.54..93475.71 rows=999891 width=8) (actual time=73.160..3282.006 rows=999960 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared read=22166
+   ->  Seq Scan on s  (cost=0.00..61622.00 rows=4000000 width=12) (actual time=3.786..927.809 rows=4000000 loops=1)
+         Buffers: shared read=21622
+   ->  Hash  (cost=1791.00..1791.00 rows=25163 width=4) (actual time=68.685..68.685 rows=24999 loops=1)
+         Buckets: 4096  Batches: 1  Memory Usage: 879kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25163 width=4) (actual time=0.032..51.197 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+ Planning time: 25.807 ms
+ Execution time: 3400.297 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |          21622 |             0 |             1 |            0
+(2 rows)
+
+Number of tuples in relation R = 100000
+Join factor = 80
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 80)) AS temp(x);
+SELECT 8000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  80
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                      QUERY PLAN                                                      
+----------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2102.24..183920.53 rows=1944768 width=8) (actual time=73.504..6297.670 rows=1999920 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared read=43788
+   ->  Seq Scan on s  (cost=0.00..123243.57 rows=7999957 width=12) (actual time=4.303..1742.842 rows=8000000 loops=1)
+         Buffers: shared read=43244
+   ->  Hash  (cost=1791.00..1791.00 rows=24899 width=4) (actual time=68.688..68.688 rows=24999 loops=1)
+         Buckets: 4096  Batches: 1  Memory Usage: 879kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=24899 width=4) (actual time=0.030..51.243 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+ Planning time: 11.496 ms
+ Execution time: 6527.306 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |          43244 |             0 |             1 |            0
+(2 rows)
+
+ENDOFFILE__: 

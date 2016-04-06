@@ -1,0 +1,6 @@
+off
+off
+on
+off
+
+SET enable_nestloop TO off; SET enable_indexscan TO off; SET enable_mergejoin TO on; SET enable_hashjoin TO off;

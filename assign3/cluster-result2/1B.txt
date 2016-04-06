@@ -1,0 +1,1426 @@
+Number of tuples in relation R = 100000
+Join factor = 10
+Running psql to load data ...
+DROP INDEX IF EXISTS ra_idx;
+DROP INDEX
+DROP INDEX IF EXISTS sy_idx;
+DROP INDEX
+DROP TABLE IF EXISTS r;
+DROP TABLE
+DROP TABLE IF EXISTS s;
+DROP TABLE
+SELECT a, a AS b, trunc(random() * 1000000) as c  INTO r FROM (SELECT * FROM generate_series(1,100000)) AS temp(a);
+SELECT 100000
+SELECT x, (x % 100000) + 1 AS y, trunc(random() * 1000000) as z INTO s FROM (SELECT * FROM generate_series(1, 100000 * 10)) AS temp(x);
+SELECT 1000000
+CREATE INDEX ra_idx ON r (a);
+CREATE INDEX
+CREATE INDEX sy_idx ON s (y);
+CREATE INDEX
+VACUUM ANALYZE;
+VACUUM
+ALGOCHANGE:  inlj
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  12500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 12500);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1823.06..43728.06 rows=128601 width=8) (actual time=70.641..658.554 rows=124990 loops=1)
+   Buffers: shared hit=161865 read=1572
+   ->  HashAggregate  (cost=1822.64..1949.19 rows=12655 width=4) (actual time=56.298..65.021 rows=12499 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=12655 width=4) (actual time=0.036..45.717 rows=12499 loops=1)
+               Filter: (b < 12500)
+               Rows Removed by Filter: 87501
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..3.20 rows=10 width=12) (actual time=0.019..0.040 rows=10 loops=12499)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=161865 read=1031
+ Planning time: 19.491 ms
+ Execution time: 686.197 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |            686 |        124304 |           346 |        37561
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  25000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1854.37..52964.51 rows=255871 width=8) (actual time=84.048..1187.573 rows=249990 loops=1)
+   Buffers: shared hit=323757 read=2590
+   ->  HashAggregate  (cost=1853.95..2105.74 rows=25179 width=4) (actual time=83.030..101.729 rows=24999 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25179 width=4) (actual time=10.682..61.400 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..1.92 rows=10 width=12) (actual time=0.013..0.036 rows=10 loops=24999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=323757 read=2049
+ Planning time: 16.531 ms
+ Execution time: 1241.570 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           1361 |        248629 |           689 |        75128
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  37500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 37500);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1884.53..61862.45 rows=378477 width=8) (actual time=102.678..1474.814 rows=374990 loops=1)
+   Buffers: shared hit=485648 read=3608
+   ->  HashAggregate  (cost=1884.11..2256.55 rows=37244 width=4) (actual time=101.672..125.490 rows=37499 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=37244 width=4) (actual time=0.226..69.506 rows=37499 loops=1)
+               Filter: (b < 37500)
+               Rows Removed by Filter: 62501
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..1.50 rows=10 width=12) (actual time=0.011..0.030 rows=10 loops=37499)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=485648 read=3067
+ Planning time: 9.088 ms
+ Execution time: 1539.889 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           2037 |        372953 |          1031 |       112695
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  50000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 50000);
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=1915.56..71014.09 rows=504578 width=8) (actual time=126.746..1766.210 rows=499990 loops=1)
+   Buffers: shared hit=647540 read=4627
+   ->  HashAggregate  (cost=1915.13..2411.66 rows=49653 width=4) (actual time=126.004..153.802 rows=49999 loops=1)
+         Group Key: r.a
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=49653 width=4) (actual time=0.212..68.520 rows=49999 loops=1)
+               Filter: (b < 50000)
+               Rows Removed by Filter: 50001
+               Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..1.28 rows=10 width=12) (actual time=0.011..0.027 rows=10 loops=49999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=647540 read=4086
+ Planning time: 8.139 ms
+ Execution time: 1838.128 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           2713 |        497277 |          1374 |       150263
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  75000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 75000);
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=7871.81..95286.70 rows=763010 width=8) (actual time=245.710..1992.287 rows=749990 loops=1)
+   Buffers: shared hit=971324 read=6665, temp read=129 written=129
+   ->  Unique  (cost=7871.38..8246.80 rows=75084 width=4) (actual time=244.677..342.320 rows=74999 loops=1)
+         Buffers: shared hit=3 read=541, temp read=129 written=129
+         ->  Sort  (cost=7871.38..8059.09 rows=75084 width=4) (actual time=244.675..292.176 rows=74999 loops=1)
+               Sort Key: r.a
+               Sort Method: external sort  Disk: 1032kB
+               Buffers: shared hit=3 read=541, temp read=129 written=129
+               ->  Seq Scan on r  (cost=0.00..1791.00 rows=75084 width=4) (actual time=2.795..74.174 rows=74999 loops=1)
+                     Filter: (b < 75000)
+                     Rows Removed by Filter: 25001
+                     Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..1.06 rows=10 width=12) (actual time=0.007..0.017 rows=10 loops=74999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=971321 read=6124
+ Planning time: 24.246 ms
+ Execution time: 2106.459 ms
+(17 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           4065 |        745925 |          2060 |       225396
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  100000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = on;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 100000);
+                                                       QUERY PLAN                                                        
+-------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=10095.34..115691.62 rows=1000000 width=8) (actual time=331.764..2543.027 rows=999990 loops=1)
+   Buffers: shared hit=1295118 read=8691, temp read=171 written=171
+   ->  Unique  (cost=10094.92..10594.87 rows=99990 width=4) (actual time=321.713..444.929 rows=99999 loops=1)
+         Buffers: shared hit=3 read=541, temp read=171 written=171
+         ->  Sort  (cost=10094.92..10344.89 rows=99990 width=4) (actual time=321.710..381.551 rows=99999 loops=1)
+               Sort Key: r.a
+               Sort Method: external sort  Disk: 1368kB
+               Buffers: shared hit=3 read=541, temp read=171 written=171
+               ->  Seq Scan on r  (cost=0.00..1791.00 rows=99990 width=4) (actual time=3.007..81.656 rows=99999 loops=1)
+                     Filter: (b < 100000)
+                     Rows Removed by Filter: 1
+                     Buffers: shared read=541
+   ->  Index Scan using sy_idx on s  (cost=0.42..0.95 rows=10 width=12) (actual time=0.006..0.016 rows=10 loops=99999)
+         Index Cond: (y = r.a)
+         Buffers: shared hit=1295115 read=8150
+ Planning time: 22.624 ms
+ Execution time: 2686.814 ms
+(17 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |        994584 |          2745 |       300531
+(2 rows)
+
+ALGOCHANGE:  smj-i
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  12500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 12500);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=2653.73..54466.64 rows=128601 width=8) (actual time=59.897..416.588 rows=124990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=124315 read=1564
+   ->  Index Scan using sy_idx on s  (cost=0.42..47416.09 rows=1000000 width=12) (actual time=0.024..215.146 rows=124991 loops=1)
+         Buffers: shared hit=124310 read=1025
+   ->  Sort  (cost=2653.27..2684.91 rows=12655 width=4) (actual time=59.854..63.267 rows=12499 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 1068kB
+         Buffers: shared hit=5 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=12655 width=4) (actual time=0.015..52.512 rows=12499 loops=1)
+               Filter: (b < 12500)
+               Rows Removed by Filter: 87501
+               Buffers: shared hit=2 read=539
+ Planning time: 61.809 ms
+ Execution time: 443.118 ms
+(15 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |            686 |        124307 |           347 |            4
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  25000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=0.88..57090.28 rows=255871 width=8) (actual time=0.073..704.528 rows=249990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=248640 read=2853
+   ->  Index Scan using sy_idx on s  (cost=0.42..47416.09 rows=1000000 width=12) (actual time=0.024..356.005 rows=249991 loops=1)
+         Buffers: shared hit=248635 read=2042
+   ->  Materialize  (cost=0.29..3461.24 rows=25179 width=4) (actual time=0.035..111.513 rows=24999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=25179 width=4) (actual time=0.026..97.036 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=5 read=811
+ Planning time: 17.867 ms
+ Execution time: 751.701 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |           1361 |        248632 |           689 |            4
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  37500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 37500);
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=0.95..58900.03 rows=378477 width=8) (actual time=0.073..1050.545 rows=374990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=372964 read=3870
+   ->  Index Scan using sy_idx on s  (cost=0.42..47416.09 rows=1000000 width=12) (actual time=0.024..548.317 rows=374991 loops=1)
+         Buffers: shared hit=372959 read=3059
+   ->  Materialize  (cost=0.29..3491.40 rows=37244 width=4) (actual time=0.035..133.278 rows=37499 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=37244 width=4) (actual time=0.025..110.702 rows=37499 loops=1)
+               Filter: (b < 37500)
+               Rows Removed by Filter: 62501
+               Buffers: shared hit=5 read=811
+ Planning time: 24.896 ms
+ Execution time: 1123.843 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |           2037 |        372956 |          1030 |            4
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  50000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 50000);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=0.90..60761.38 rows=504578 width=8) (actual time=0.083..1238.264 rows=499990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=497288 read=4888
+   ->  Index Scan using sy_idx on s  (cost=0.42..47416.09 rows=1000000 width=12) (actual time=0.033..683.872 rows=499991 loops=1)
+         Buffers: shared hit=497283 read=4077
+   ->  Materialize  (cost=0.29..3522.43 rows=49653 width=4) (actual time=0.035..111.376 rows=49999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=49653 width=4) (actual time=0.026..84.218 rows=49999 loops=1)
+               Filter: (b < 50000)
+               Rows Removed by Filter: 50001
+               Buffers: shared hit=5 read=811
+ Planning time: 31.592 ms
+ Execution time: 1327.420 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |           2713 |        497280 |          1372 |            4
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  75000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 75000);
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=1.00..64576.03 rows=763010 width=8) (actual time=0.073..1603.303 rows=749990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=745936 read=6923
+   ->  Index Scan using sy_idx on s  (cost=0.42..47416.09 rows=1000000 width=12) (actual time=0.024..884.692 rows=749991 loops=1)
+         Buffers: shared hit=745931 read=6112
+   ->  Materialize  (cost=0.29..3586.00 rows=75084 width=4) (actual time=0.035..132.678 rows=74999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=75084 width=4) (actual time=0.025..96.483 rows=74999 loops=1)
+               Filter: (b < 75000)
+               Rows Removed by Filter: 25001
+               Buffers: shared hit=5 read=811
+ Planning time: 9.924 ms
+ Execution time: 1719.749 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |           4065 |        745928 |          2055 |            4
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  100000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = on;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 100000);
+                                                            QUERY PLAN                                                             
+-----------------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=1.01..68311.93 rows=1000000 width=8) (actual time=0.072..1998.145 rows=999990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=994596 read=8946
+   ->  Index Scan using sy_idx on s  (cost=0.42..47416.09 rows=1000000 width=12) (actual time=0.024..1130.638 rows=999991 loops=1)
+         Buffers: shared hit=994591 read=8135
+   ->  Materialize  (cost=0.29..3648.27 rows=99990 width=4) (actual time=0.034..139.073 rows=99999 loops=1)
+         Buffers: shared hit=5 read=811
+         ->  Index Scan using ra_idx on r  (cost=0.29..3398.29 rows=99990 width=4) (actual time=0.025..94.275 rows=99999 loops=1)
+               Filter: (b < 100000)
+               Rows Removed by Filter: 1
+               Buffers: shared hit=5 read=811
+ Planning time: 44.494 ms
+ Execution time: 2142.342 ms
+(13 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |           276 |            4
+ s       |           5406 |        994587 |          2737 |            5
+(2 rows)
+
+ALGOCHANGE:  smj
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  12500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 12500);
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=134807.65..141705.75 rows=128601 width=8) (actual time=1994.955..2130.937 rows=124990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=5943, temp read=341 written=2691
+   ->  Sort  (cost=132154.34..134654.34 rows=1000000 width=12) (actual time=1954.004..2020.427 rows=124991 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 21448kB
+         Buffers: shared hit=5 read=5404, temp read=341 written=2691
+         ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=9.135..416.023 rows=1000000 loops=1)
+               Buffers: shared hit=2 read=5404
+   ->  Sort  (cost=2653.27..2684.91 rows=12655 width=4) (actual time=40.937..42.318 rows=12499 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 1068kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=12655 width=4) (actual time=0.018..36.356 rows=12499 loops=1)
+               Filter: (b < 12500)
+               Rows Removed by Filter: 87501
+               Buffers: shared hit=2 read=539
+ Planning time: 32.302 ms
+ Execution time: 2150.126 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           5406 |             2 |             6 |            1
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  25000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=135785.95..144562.65 rows=255871 width=8) (actual time=2120.733..2401.003 rows=249990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=5943, temp read=681 written=2691
+   ->  Sort  (cost=132154.34..134654.34 rows=1000000 width=12) (actual time=2072.478..2214.752 rows=249991 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 21448kB
+         Buffers: shared hit=5 read=5404, temp read=681 written=2691
+         ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=7.330..432.531 rows=1000000 loops=1)
+               Buffers: shared hit=2 read=5404
+   ->  Sort  (cost=3631.58..3694.52 rows=25179 width=4) (actual time=48.243..51.156 rows=24999 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 2136kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25179 width=4) (actual time=0.017..39.126 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared hit=2 read=539
+ Planning time: 41.354 ms
+ Execution time: 2434.062 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           5406 |             2 |             6 |            1
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  37500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 37500);
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=136773.10..147359.50 rows=378477 width=8) (actual time=2042.012..2468.934 rows=374990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=5943, temp read=1011 written=2691
+   ->  Sort  (cost=132154.34..134654.34 rows=1000000 width=12) (actual time=1988.396..2207.051 rows=374991 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 21448kB
+         Buffers: shared hit=5 read=5404, temp read=1011 written=2691
+         ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=14.305..418.249 rows=1000000 loops=1)
+               Buffers: shared hit=2 read=5404
+   ->  Sort  (cost=4618.70..4711.81 rows=37244 width=4) (actual time=53.602..58.070 rows=37499 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 3280kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=37244 width=4) (actual time=0.016..40.123 rows=37499 loops=1)
+               Filter: (b < 37500)
+               Rows Removed by Filter: 62501
+               Buffers: shared hit=2 read=539
+ Planning time: 10.077 ms
+ Execution time: 2514.463 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           5406 |             2 |             6 |            1
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  50000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 50000);
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=137818.23..150265.99 rows=504578 width=8) (actual time=2105.001..2676.417 rows=499990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=5943, temp read=1351 written=2691
+   ->  Sort  (cost=132154.34..134654.34 rows=1000000 width=12) (actual time=2045.981..2339.726 rows=499991 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 21448kB
+         Buffers: shared hit=5 read=5404, temp read=1351 written=2691
+         ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=13.013..432.398 rows=1000000 loops=1)
+               Buffers: shared hit=2 read=5404
+   ->  Sort  (cost=5663.83..5787.97 rows=49653 width=4) (actual time=59.007..64.981 rows=49999 loops=1)
+         Sort Key: r.a
+         Sort Method: quicksort  Memory: 3964kB
+         Buffers: shared hit=2 read=539
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=49653 width=4) (actual time=0.016..41.082 rows=49999 loops=1)
+               Filter: (b < 50000)
+               Rows Removed by Filter: 50001
+               Buffers: shared hit=2 read=539
+ Planning time: 10.200 ms
+ Execution time: 2735.760 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           5406 |             2 |             6 |            1
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  75000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 75000);
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=140025.84..156288.14 rows=763010 width=8) (actual time=2150.808..3043.190 rows=749990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=5943, temp read=2186 written=2856
+   ->  Sort  (cost=132154.34..134654.34 rows=1000000 width=12) (actual time=2006.450..2451.689 rows=749991 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 21448kB
+         Buffers: shared hit=5 read=5404, temp read=2021 written=2691
+         ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.188..413.382 rows=1000000 loops=1)
+               Buffers: shared hit=2 read=5404
+   ->  Sort  (cost=7871.38..8059.09 rows=75084 width=4) (actual time=144.344..169.402 rows=74999 loops=1)
+         Sort Key: r.a
+         Sort Method: external sort  Disk: 1320kB
+         Buffers: shared hit=2 read=539, temp read=165 written=165
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=75084 width=4) (actual time=0.018..39.013 rows=74999 loops=1)
+               Filter: (b < 75000)
+               Rows Removed by Filter: 25001
+               Buffers: shared hit=2 read=539
+ Planning time: 10.384 ms
+ Execution time: 3128.378 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           5406 |             2 |             6 |            1
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  100000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = on;
+SET
+SET enable_hashjoin = off;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 100000);
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
+ Merge Semi Join  (cost=142249.40..162247.55 rows=1000000 width=8) (actual time=2145.475..3338.427 rows=999990 loops=1)
+   Merge Cond: (s.y = r.a)
+   Buffers: shared hit=7 read=5943, temp read=2911 written=2911
+   ->  Sort  (cost=132154.34..134654.34 rows=1000000 width=12) (actual time=1961.483..2560.806 rows=999991 loops=1)
+         Sort Key: s.y
+         Sort Method: external merge  Disk: 21448kB
+         Buffers: shared hit=5 read=5404, temp read=2691 written=2691
+         ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.187..406.062 rows=1000000 loops=1)
+               Buffers: shared hit=2 read=5404
+   ->  Sort  (cost=10094.92..10344.89 rows=99990 width=4) (actual time=183.978..217.570 rows=99999 loops=1)
+         Sort Key: r.a
+         Sort Method: external sort  Disk: 1760kB
+         Buffers: shared hit=2 read=539, temp read=220 written=220
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=99990 width=4) (actual time=0.017..42.602 rows=99999 loops=1)
+               Filter: (b < 100000)
+               Rows Removed by Filter: 1
+               Buffers: shared hit=2 read=539
+ Planning time: 10.466 ms
+ Execution time: 3450.103 ms
+(19 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             2 |             4 |            1
+ s       |           5406 |             2 |             6 |            1
+(2 rows)
+
+ALGOCHANGE:  hj
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  12500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 12500);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=1949.19..22759.25 rows=128601 width=8) (actual time=60.781..1024.483 rows=124990 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared hit=3 read=5947
+   ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.190..293.210 rows=1000000 loops=1)
+         Buffers: shared read=5406
+   ->  Hash  (cost=1791.00..1791.00 rows=12655 width=4) (actual time=60.518..60.518 rows=12499 loops=1)
+         Buckets: 2048  Batches: 1  Memory Usage: 440kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=12655 width=4) (actual time=0.188..51.595 rows=12499 loops=1)
+               Filter: (b < 12500)
+               Rows Removed by Filter: 87501
+               Buffers: shared read=541
+ Planning time: 8.172 ms
+ Execution time: 1044.879 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |             0 |             1 |            0
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  25000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 25000);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2105.74..25047.58 rows=255871 width=8) (actual time=94.040..1081.004 rows=249990 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared hit=3 read=5947
+   ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.202..291.283 rows=1000000 loops=1)
+         Buffers: shared read=5406
+   ->  Hash  (cost=1791.00..1791.00 rows=25179 width=4) (actual time=93.736..93.736 rows=24999 loops=1)
+         Buckets: 4096  Batches: 1  Memory Usage: 879kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=25179 width=4) (actual time=0.200..70.253 rows=24999 loops=1)
+               Filter: (b < 25000)
+               Rows Removed by Filter: 75001
+               Buffers: shared read=541
+ Planning time: 8.958 ms
+ Execution time: 1119.324 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |             0 |             1 |            0
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  37500
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 37500);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2256.55..28904.40 rows=378477 width=8) (actual time=86.307..1084.418 rows=374990 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared hit=3 read=5947
+   ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.217..250.102 rows=1000000 loops=1)
+         Buffers: shared read=5406
+   ->  Hash  (cost=1791.00..1791.00 rows=37244 width=4) (actual time=86.005..86.005 rows=37499 loops=1)
+         Buckets: 4096  Batches: 1  Memory Usage: 1319kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=37244 width=4) (actual time=0.213..59.401 rows=37499 loops=1)
+               Filter: (b < 37500)
+               Rows Removed by Filter: 62501
+               Buffers: shared read=541
+ Planning time: 8.858 ms
+ Execution time: 1134.985 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |             0 |             1 |            0
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  50000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 50000);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2411.66..29519.34 rows=504578 width=8) (actual time=98.754..1246.135 rows=499990 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared hit=3 read=5947
+   ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.194..298.427 rows=1000000 loops=1)
+         Buffers: shared read=5406
+   ->  Hash  (cost=1791.00..1791.00 rows=49653 width=4) (actual time=98.458..98.458 rows=49999 loops=1)
+         Buckets: 8192  Batches: 1  Memory Usage: 1758kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=49653 width=4) (actual time=0.189..63.061 rows=49999 loops=1)
+               Filter: (b < 50000)
+               Rows Removed by Filter: 50001
+               Buffers: shared read=541
+ Planning time: 8.015 ms
+ Execution time: 1324.092 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |             0 |             1 |            0
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  75000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 75000);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=2729.55..37116.13 rows=763010 width=8) (actual time=163.997..1246.180 rows=749990 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared hit=3 read=5947
+   ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.207..248.667 rows=1000000 loops=1)
+         Buffers: shared read=5406
+   ->  Hash  (cost=1791.00..1791.00 rows=75084 width=4) (actual time=163.671..163.671 rows=74999 loops=1)
+         Buckets: 8192  Batches: 1  Memory Usage: 2637kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=75084 width=4) (actual time=0.198..93.062 rows=74999 loops=1)
+               Filter: (b < 75000)
+               Rows Removed by Filter: 25001
+               Buffers: shared read=541
+ Planning time: 8.095 ms
+ Execution time: 1340.327 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |             0 |             1 |            0
+(2 rows)
+
+Flushing page cache, dentries and inodes...
+Done flushing.
+PARAMS:  100000
+SET work_mem TO 4096;
+SET
+SET enable_nestloop = off;
+SET
+SET enable_indexscan = off;
+SET
+SET enable_mergejoin = off;
+SET
+SET enable_hashjoin = on;
+SET
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+SELECT dropdbbuffers('assign3');
+ dropdbbuffers 
+---------------
+ t
+(1 row)
+
+EXPLAIN (ANALYZE, BUFFERS) SELECT z FROM S WHERE EXISTS (SELECT * FROM r WHERE r.a = s.y AND r.b < 100000);
+                                                     QUERY PLAN                                                     
+--------------------------------------------------------------------------------------------------------------------
+ Hash Semi Join  (cost=3040.88..38446.88 rows=1000000 width=8) (actual time=148.176..1497.549 rows=999990 loops=1)
+   Hash Cond: (s.y = r.a)
+   Buffers: shared hit=3 read=5947
+   ->  Seq Scan on s  (cost=0.00..15406.00 rows=1000000 width=12) (actual time=0.190..306.039 rows=1000000 loops=1)
+         Buffers: shared read=5406
+   ->  Hash  (cost=1791.00..1791.00 rows=99990 width=4) (actual time=147.822..147.822 rows=99999 loops=1)
+         Buckets: 16384  Batches: 1  Memory Usage: 3516kB
+         Buffers: shared read=541
+         ->  Seq Scan on r  (cost=0.00..1791.00 rows=99990 width=4) (actual time=0.189..78.066 rows=99999 loops=1)
+               Filter: (b < 100000)
+               Rows Removed by Filter: 1
+               Buffers: shared read=541
+ Planning time: 7.575 ms
+ Execution time: 1646.851 ms
+(14 rows)
+
+SELECT pg_sleep(2);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+SELECT relname, heap_blks_read, heap_blks_hit, idx_blks_read, idx_blks_hit FROM pg_statio_all_tables WHERE relname IN ('r', 's');
+ relname | heap_blks_read | heap_blks_hit | idx_blks_read | idx_blks_hit 
+---------+----------------+---------------+---------------+--------------
+ r       |            541 |             0 |             1 |            0
+ s       |           5406 |             0 |             1 |            0
+(2 rows)
+
+ENDOFFILE__: 
