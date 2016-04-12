@@ -1,0 +1,20 @@
+Query A and B:
+The effects of increasing selectivity(more being selected) and join factor, as expected, increases the time needed for the query for all algorithms as it increases the number of rows needed to be examined. For INLJ in particular, hash aggregate and Unique operator is used to reduce the number of tuples in the joining stage. This works well when selectivity is high (less is selected). 
+
+For work_mem, the effects on execution time is varied. Execution time on the INLJ algorithm appears to be fairly consistent across the varying work_mem parameter. A quick scan on the various key statistics like shared hit/read, and the heap_blocks read/hit and index_blocks hit/read also reveal identical figures. Thus, the variation could just be random. The above is also true for SMJ-I.
+
+For SMJ, curiously, a U-shaped plot is obtained. The graph shows that increasing memory from 2-to-4-to-8MB helps with execution time. However, further increase leads to longer execution time. 
+The sort key on r.a is unaffected by the work_mem changes as its memory footprint can fit entirely in memory. For the sort key on s.y, external merge sort is utilised. The discussion would focus on this particular sort. For the left part of the graph, the decrease in execution time can be explained by the drastic drop in temp reads/writes from 2000+/4000+ respectively to 600+/2500+ as we increase the work_mem from 2 to 4/8MB.
+However, as we increase work_mem beyond 8MB, the execution time starts to increase again. This is due to temp reads increasing again as we increase work_mem. Curiously, given that the external merge sort only requires ~21MB of disk space, this seems to be able to comfortably fit in the work_mem when we set it to 32MB. However, the query optimiser still decide to carry out an external merge sort. One reason could be that the work_mem is utilised for the entire query. Thus, the query optimiser could be ‘reserving’ work_mem for future operations and thus conservatively choosing to perform external merge sort for key s.y.
+
+For HJ, the memory used for the hash table is only ~1000KB, thus everything can fit into even the smallest work_mem parameter(2MB), thus, additional memory allocated does not speed up the execution time and it is relatively constant across the board.
+
+Query C:
+Increasing join factor has a similar effect as query A and B - increases execution time across the 4 algorithms.
+
+Whereas for selectivity and work_mem, the execution time remains relatively constant as these parameters increases.
+Unlike for query A and B, for SMJ, the sort of key s.y has fairly consistent temp reads of around 2600+ pages, except for the the case with 2MB of work_mem, thus, increasing work_mem has not much impact on execution time (aside from the first increase from 2MB to 4MB).
+
+For selectivity, the execution time for query C is relatively longer than that for query B. Inspecting the query algorithms, the query optimisers uses hash aggregates and Unique operator to reduce the table size when performing nest loop join. For query C, no such optimisation is performed and thus, the graph remains flat.
+
+Overall anti joins appear to be less efficient than semijoins and joins, with longer execution times over similar sets of queries.
